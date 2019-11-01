@@ -1,7 +1,7 @@
+import { PluginAModule } from '@c8-plugin/plugin-a';
 import { DynamicModule, Logger, Module } from '@nestjs/common';
 import * as fs from 'fs';
 import * as path from 'path';
-import { of } from 'rxjs';
 import { PluginController } from './plugin/plugin.controller';
 
 export const PLUGIN_PATH = path.normalize(path.join(process.cwd(), 'plugins'));
@@ -11,44 +11,14 @@ export const PLUGIN_PATH = path.normalize(path.join(process.cwd(), 'plugins'));
 })
 export class PluginModule {
 
-  static async registerPluginsAsync(): Promise<DynamicModule> {
+  public static async registerPluginsAsync(): Promise<DynamicModule> {
     return this.loadPlugins();
-  }
-
-  private static loadPlugin(path: string): Promise<DynamicModule> {
-    const modulePlugin = require(path);
-    debugger;
-    return of(modulePlugin).toPromise();
-    // .then((module: DynamicModule) => {
-    //   Logger.debug(`Loaded module from ${module}`, 'loadPlugins');
-    //   return module;
-    // }, error => {
-    //   Logger.error(`Error loading plugins: ${error}`, 'loadPlugins');
-    //   return null;
-    // });
-  }
-  private static searchPluginsInFolder(folder: string): string[] {
-    return this.recFindByExt(folder, 'js');
-
   }
 
   private static loadPlugins(): Promise<DynamicModule> {
     Logger.log(`Loading plugins from ${PLUGIN_PATH}`, 'loadPlugins');
-    // Logger.log(`Current directory ${__dirname}`, 'loadPlugins');
 
     const loadedPlugins: Array<Promise<DynamicModule>> = new Array();
-
-    // const plugins = this.searchPluginsInFolder(PLUGIN_PATH);
-
-    // glob(PLUGIN_PATH + '/**/index.js', {}, (err, files) => {
-
-    //   Logger.log(`Found files ${files.length}`, 'loadPlugins');
-    //   files.forEach(file => {
-
-    //     Logger.log(`Found plugins ${file}`, 'loadPlugins');
-
-    //   });
-    // });
     this.searchPluginsInFolder(PLUGIN_PATH).forEach(filePath => {
       loadedPlugins.push(
         this.loadPlugin(filePath).then(module => {
@@ -62,16 +32,19 @@ export class PluginModule {
 
       return {
         module: PluginModule,
-        imports: [...allPlugins],
+        imports: [PluginAModule],
       } as DynamicModule;
 
     });
+  }
 
-    // return Promise.all(loadedPlugins).then(pluginModules => {
-    //   console.log('Loaded plugins: ', pluginModules);
-    //   return pluginModules;
-    // });
+  private static loadPlugin(path: string): Promise<DynamicModule> {
+    const modulePlugin = import(path);
+    return modulePlugin;
+  }
 
+  private static searchPluginsInFolder(folder: string): string[] {
+    return this.recFindByExt(folder, 'mjs');
   }
 
   private static recFindByExt(base: string, ext: string, files?, result?): any[] {
