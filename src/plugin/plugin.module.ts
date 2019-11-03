@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { PluginController } from './plugin/plugin.controller';
 
-export const PLUGIN_PATH = path.normalize(path.join(process.cwd(), 'plugins'));
+export const PLUGIN_PATH = path.normalize(path.join(process.cwd(), 'dist/libs'));
 
 @Module({
   controllers: [PluginController],
