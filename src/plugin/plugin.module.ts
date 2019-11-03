@@ -1,4 +1,3 @@
-import { PluginAModule } from '@c8-plugin/plugin-a';
 import { DynamicModule, Logger, Module } from '@nestjs/common';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -21,9 +20,7 @@ export class PluginModule {
     const loadedPlugins: Array<Promise<DynamicModule>> = new Array();
     this.searchPluginsInFolder(PLUGIN_PATH).forEach(filePath => {
       loadedPlugins.push(
-        this.loadPlugin(filePath).then(module => {
-          if (module) { return module; }
-        }),
+        this.loadPlugin(filePath).then(module => (module as DynamicModule)),
       );
     });
 
@@ -32,22 +29,22 @@ export class PluginModule {
 
       return {
         module: PluginModule,
-        imports: [PluginAModule],
+        imports: [...allPlugins],
       } as DynamicModule;
 
     });
   }
 
-  private static loadPlugin(path: string): Promise<DynamicModule> {
-    const modulePlugin = import(path);
+  private static loadPlugin(pluginPath: string): Promise<DynamicModule> {
+    const modulePlugin = import(pluginPath);
     return modulePlugin;
   }
 
   private static searchPluginsInFolder(folder: string): string[] {
-    return this.recFindByExt(folder, 'mjs');
+    return this.recFindByExt(folder, 'js');
   }
 
-  private static recFindByExt(base: string, ext: string, files?, result?): any[] {
+  private static recFindByExt(base: string, ext: string, files?: string[], result?: string[]): any[] {
     files = files || fs.readdirSync(base);
     result = result || [];
 
@@ -57,7 +54,9 @@ export class PluginModule {
         result = this.recFindByExt(newbase, ext, fs.readdirSync(newbase), result);
       } else {
         if (file.substr(-1 * (ext.length + 1)) === '.' + ext) {
-          result.push(newbase);
+          if (result) {
+            result.push(newbase);
+          }
         }
       }
     },

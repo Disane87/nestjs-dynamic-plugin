@@ -19,6 +19,7 @@ async function bootstrap() {
   SwaggerModule.setup('api', app, document);
 
   app.useStaticAssets(join(__dirname, '..', 'public'));
+  // app.enableShutdownHooks();
 
   await app.listen(3000);
 }
